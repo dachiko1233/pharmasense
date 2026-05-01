@@ -270,7 +270,7 @@ export default function DashboardPage() {
                         <Clock className="h-3 w-3" />
                         {alert.days_until_expiry <= 0
                           ? t("expired")
-                          : `${alert.days_until_expiry} ${t("days_left").replace("{{days}}", "")}`}
+                          : t("days_left", { days: alert.days_until_expiry })}
                       </div>
                       <p className="text-xs font-semibold text-slate-700 mt-0.5">
                         {formatCurrency(alert.estimated_loss)} loss

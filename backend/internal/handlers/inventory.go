@@ -12,14 +12,16 @@ import (
 	"github.com/google/uuid"
 	"pharmasense/backend/internal/middleware"
 	"pharmasense/backend/internal/repository"
+	"pharmasense/backend/internal/services"
 )
 
 type InventoryHandler struct {
-	repo *repository.Repository
+	repo   *repository.Repository
+	engine *services.RiskEngine
 }
 
-func NewInventoryHandler(repo *repository.Repository) *InventoryHandler {
-	return &InventoryHandler{repo: repo}
+func NewInventoryHandler(repo *repository.Repository, engine *services.RiskEngine) *InventoryHandler {
+	return &InventoryHandler{repo: repo, engine: engine}
 }
 
 func (h *InventoryHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -224,4 +226,130 @@ func (h *InventoryHandler) ImportTemplate(w http.ResponseWriter, r *http.Request
 	_ = cw.Write([]string{"Paracetamol 500mg", "5201234567890", "BTH-2024-00001", "2026-06-01", "100", "1.50", "2.20", "MedSupply Cyprus"})
 	_ = cw.Write([]string{"Vitamin C 1000mg", "5201234567891", "BTH-2024-00002", "2026-12-01", "200", "3.00", "4.50", "EuroMeds"})
 	cw.Flush()
+}
+
+func (h *InventoryHandler) ConfirmImport(w http.ResponseWriter, r *http.Request) {
+	claims := middleware.GetClaims(r)
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		writeError(w, http.StatusBadRequest, "file too large")
+		return
+	}
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "no file uploaded")
+		return
+	}
+	defer file.Close()
+
+	cr := csv.NewReader(file)
+	records, err := cr.ReadAll()
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid CSV format")
+		return
+	}
+	if len(records) < 2 {
+		writeError(w, http.StatusBadRequest, "CSV must have header + at least one row")
+		return
+	}
+
+	header := records[0]
+	colIndex := make(map[string]int)
+	for i, h := range header {
+		colIndex[strings.ToLower(strings.TrimSpace(h))] = i
+	}
+	required := []string{"product_name", "barcode", "batch_number", "expiry_date", "quantity", "purchase_price"}
+	var missing []string
+	for _, col := range required {
+		if _, ok := colIndex[col]; !ok {
+			missing = append(missing, col)
+		}
+	}
+	if len(missing) > 0 {
+		writeError(w, http.StatusBadRequest, "missing columns: "+strings.Join(missing, ", "))
+		return
+	}
+
+	type rowErr struct {
+		Row   int    `json:"row"`
+		Error string `json:"error"`
+	}
+	var errs []rowErr
+	imported := 0
+
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+
+	for i, rec := range records[1:] {
+		rowNum := i + 2
+		get := func(col string) string {
+			idx, ok := colIndex[col]
+			if !ok || idx >= len(rec) {
+				return ""
+			}
+			return strings.TrimSpace(rec[idx])
+		}
+
+		productName := get("product_name")
+		barcode := get("barcode")
+		batchNumber := get("batch_number")
+		expiryStr := get("expiry_date")
+		qtyStr := get("quantity")
+		priceStr := get("purchase_price")
+
+		expiryDate, err := time.Parse("2006-01-02", expiryStr)
+		if err != nil {
+			errs = append(errs, rowErr{Row: rowNum, Error: "invalid expiry_date (YYYY-MM-DD expected)"})
+			continue
+		}
+		qty, err := strconv.Atoi(qtyStr)
+		if err != nil || qty <= 0 {
+			errs = append(errs, rowErr{Row: rowNum, Error: "invalid quantity"})
+			continue
+		}
+		purchasePrice, err := strconv.ParseFloat(priceStr, 64)
+		if err != nil || purchasePrice <= 0 {
+			errs = append(errs, rowErr{Row: rowNum, Error: "invalid purchase_price"})
+			continue
+		}
+
+		sellingPrice := purchasePrice * 1.5
+		if sp, err := strconv.ParseFloat(get("selling_price"), 64); err == nil && sp > 0 {
+			sellingPrice = sp
+		}
+
+		productID, err := h.repo.FindOrCreateProduct(r.Context(), productName, barcode)
+		if err != nil {
+			errs = append(errs, rowErr{Row: rowNum, Error: "product lookup failed: " + err.Error()})
+			continue
+		}
+
+		batchID, err := h.repo.InsertBatch(r.Context(), repository.BatchImportRow{
+			ProductID:     productID,
+			PharmacyID:    claims.PharmacyID,
+			BatchNumber:   batchNumber,
+			ExpiryDate:    expiryDate,
+			Quantity:      qty,
+			PurchasePrice: purchasePrice,
+			SellingPrice:  sellingPrice,
+			Supplier:      get("supplier"),
+		})
+		if err != nil {
+			errs = append(errs, rowErr{Row: rowNum, Error: "insert failed: " + err.Error()})
+			continue
+		}
+
+		avg, _ := h.repo.AvgDailySales(r.Context(), claims.PharmacyID, productID)
+		days := int(expiryDate.Sub(today).Hours() / 24)
+		ra := services.Calculate(days, qty, avg, purchasePrice)
+		ra.BatchID = batchID
+		ra.PharmacyID = claims.PharmacyID
+		_ = h.repo.UpsertRiskAssessment(r.Context(), &ra)
+
+		imported++
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"imported": imported,
+		"errors":   errs,
+	})
 }

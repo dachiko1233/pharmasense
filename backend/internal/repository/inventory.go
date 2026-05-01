@@ -196,6 +196,33 @@ func (r *Repository) GetBatchWithRisk(ctx context.Context, id uuid.UUID) (*model
 	return &b, nil
 }
 
+type BatchImportRow struct {
+	ProductID     uuid.UUID
+	PharmacyID    uuid.UUID
+	BatchNumber   string
+	ExpiryDate    time.Time
+	Quantity      int
+	PurchasePrice float64
+	SellingPrice  float64
+	Supplier      string
+}
+
+func (r *Repository) InsertBatch(ctx context.Context, row BatchImportRow) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := r.pool.QueryRow(ctx, `
+		INSERT INTO inventory_batches (
+			id, pharmacy_id, product_id, batch_number, expiry_date,
+			initial_quantity, current_quantity, purchase_price, selling_price,
+			supplier, received_date
+		) VALUES (
+			gen_random_uuid(), $1, $2, NULLIF($3,''), $4, $5, $5, $6, $7, NULLIF($8,''), CURRENT_DATE
+		) RETURNING id`,
+		row.PharmacyID, row.ProductID, row.BatchNumber, row.ExpiryDate,
+		row.Quantity, row.PurchasePrice, row.SellingPrice, row.Supplier,
+	).Scan(&id)
+	return id, err
+}
+
 func (r *Repository) ListSuppliers(ctx context.Context, pharmacyID uuid.UUID) ([]string, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT DISTINCT supplier FROM inventory_batches

@@ -9,6 +9,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type inventoryBatchRow struct {
+	BatchID       uuid.UUID
+	ProductID     uuid.UUID
+	PharmacyID    uuid.UUID
+	ExpiryDate    string
+	CurrentQty    int
+	PurchasePrice float64
+}
+
 func (r *Repository) UpsertRiskAssessment(ctx context.Context, ra *models.RiskAssessment) error {
 	_, err := r.pool.Exec(ctx, `
 		INSERT INTO risk_assessments (
@@ -198,14 +207,7 @@ func (r *Repository) GetTopRisk(ctx context.Context, pharmacyID uuid.UUID, limit
 	return items, nil
 }
 
-func (r *Repository) ListBatchIDsForPharmacy(ctx context.Context, pharmacyID uuid.UUID) ([]struct {
-	BatchID       uuid.UUID
-	ProductID     uuid.UUID
-	PharmacyID    uuid.UUID
-	ExpiryDate    string
-	CurrentQty    int
-	PurchasePrice float64
-}, error) {
+func (r *Repository) ListBatchIDsForPharmacy(ctx context.Context, pharmacyID uuid.UUID) ([]inventoryBatchRow, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT id, product_id, pharmacy_id, expiry_date::text, current_quantity, purchase_price
 		FROM inventory_batches
@@ -215,23 +217,14 @@ func (r *Repository) ListBatchIDsForPharmacy(ctx context.Context, pharmacyID uui
 	}
 	defer rows.Close()
 
-	type row []struct {
-		BatchID       uuid.UUID
-		ProductID     uuid.UUID
-		PharmacyID    uuid.UUID
-		ExpiryDate    string
-		CurrentQty    int
-		PurchasePrice float64
-	}
-
-	var result []row
+	var result []inventoryBatchRow
 
 	for rows.Next() {
-		var r row
-		if err := rows.Scan(&r.BatchID, &r.ProductID, &r.PharmacyID, &r.ExpiryDate, &r.CurrentQty, &r.PurchasePrice); err != nil {
+		var row inventoryBatchRow
+		if err := rows.Scan(&row.BatchID, &row.ProductID, &row.PharmacyID, &row.ExpiryDate, &row.CurrentQty, &row.PurchasePrice); err != nil {
 			return nil, err
 		}
-		result = append(result, r)
+		result = append(result, row)
 	}
 	return result, nil
 }

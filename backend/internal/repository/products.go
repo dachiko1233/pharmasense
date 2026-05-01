@@ -88,6 +88,23 @@ func (r *Repository) GetProduct(ctx context.Context, id uuid.UUID) (*models.Prod
 	return &p, nil
 }
 
+func (r *Repository) FindOrCreateProduct(ctx context.Context, name, barcode string) (uuid.UUID, error) {
+	if barcode != "" {
+		var id uuid.UUID
+		err := r.pool.QueryRow(ctx, `SELECT id FROM products WHERE barcode = $1`, barcode).Scan(&id)
+		if err == nil {
+			return id, nil
+		}
+	}
+	var id uuid.UUID
+	err := r.pool.QueryRow(ctx, `
+		INSERT INTO products (id, barcode, name)
+		VALUES (gen_random_uuid(), NULLIF($1,''), $2)
+		ON CONFLICT (barcode) DO UPDATE SET name = EXCLUDED.name
+		RETURNING id`, barcode, name).Scan(&id)
+	return id, err
+}
+
 func (r *Repository) ListCategories(ctx context.Context) ([]string, error) {
 	rows, err := r.pool.Query(ctx, `SELECT DISTINCT category FROM products WHERE category IS NOT NULL ORDER BY category`)
 	if err != nil {

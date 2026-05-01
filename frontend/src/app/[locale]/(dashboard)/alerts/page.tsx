@@ -50,9 +50,9 @@ function AlertCard({
 
   const suggest =
     batch.risk_level === "CRITICAL"
-      ? t("suggest_discount").replace("{{pct}}", batch.suggested_discount_percent.toString())
+      ? t("suggest_discount", { pct: batch.suggested_discount_percent })
       : batch.risk_level === "HIGH"
-      ? t("suggest_discount").replace("{{pct}}", batch.suggested_discount_percent.toString())
+      ? t("suggest_discount", { pct: batch.suggested_discount_percent })
       : t("suggest_transfer");
 
   return (

@@ -118,6 +118,21 @@ export const inventoryApi = {
       body: form,
     }).then((r) => r.json());
   },
+  confirmImport: async (file: File): Promise<{ imported: number; errors: { row: number; error: string }[] }> => {
+    const form = new FormData();
+    form.append("file", file);
+    const token = getToken();
+    const res = await fetch(`${BASE_URL}/inventory/import/confirm`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(body.error || "Import failed");
+    }
+    return res.json();
+  },
 };
 
 // Products

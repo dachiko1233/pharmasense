@@ -21,7 +21,7 @@ func New(repo *repository.Repository, authSvc *services.AuthService, engine *ser
 
 	authH := handlers.NewAuthHandler(authSvc, repo)
 	pharmH := handlers.NewPharmacyHandler(repo)
-	invH := handlers.NewInventoryHandler(repo)
+	invH := handlers.NewInventoryHandler(repo, engine)
 	riskH := handlers.NewRiskHandler(repo, engine)
 	alertsH := handlers.NewAlertsHandler(repo)
 	reportsH := handlers.NewReportsHandler(repo)
@@ -49,6 +49,7 @@ func New(repo *repository.Repository, authSvc *services.AuthService, engine *ser
 			r.Get("/inventory/filters", invH.GetFilters)
 			r.Get("/inventory/export", invH.ExportCSV)
 			r.Post("/inventory/import", invH.ImportCSV)
+			r.Post("/inventory/import/confirm", invH.ConfirmImport)
 			r.Get("/inventory/import/template", invH.ImportTemplate)
 			r.Get("/inventory/{id}", invH.Get)
 

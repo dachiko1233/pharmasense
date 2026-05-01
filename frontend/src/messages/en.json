@@ -30,7 +30,7 @@
     "view_all": "View All Alerts",
     "items": "items",
     "no_critical": "No critical alerts",
-    "days_left": "{{days}} days left",
+    "days_left": "{days} days left",
     "expires_today": "Expires today",
     "expired": "Expired"
   },
@@ -76,7 +76,7 @@
     "action_recorded": "Action recorded successfully",
     "discount_pct": "Discount",
     "no_alerts": "No alerts in this category",
-    "suggest_discount": "Apply {{pct}}% discount to clear before expiry",
+    "suggest_discount": "Apply {pct}% discount to clear before expiry",
     "suggest_transfer": "Transfer to a higher-demand branch",
     "suggest_return": "Return to supplier for partial refund"
   },
@@ -106,7 +106,7 @@
     "preview": "Preview",
     "import_btn": "Import",
     "success": "Import complete",
-    "errors_found": "{{count}} errors found",
+    "errors_found": "{count} errors found",
     "rows": "rows",
     "row": "Row",
     "error": "Error"

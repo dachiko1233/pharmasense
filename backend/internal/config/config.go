@@ -16,10 +16,14 @@ type Config struct {
 }
 
 func Load() *Config {
-	_ = godotenv.Load()
+	for _, p := range []string{".env", "../.env", "../../.env", "../../../.env"} {
+		if err := godotenv.Load(p); err == nil {
+			break
+		}
+	}
 
 	cfg := &Config{
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://pharmasense:pharmasense@localhost:5432/pharmasense?sslmode=disable"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://pharmasense:pharmasense@127.0.0.1:5433/pharmasense?sslmode=disable"),
 		JWTSecret:   getEnv("JWT_SECRET", "dev-secret-key-change-in-production-32c"),
 		Port:        getEnv("PORT", "3001"),
 		Env:         getEnv("ENV", "development"),

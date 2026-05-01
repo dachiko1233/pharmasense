@@ -15,13 +15,16 @@ const ClaimsKey contextKey = "claims"
 func Auth(authSvc *services.AuthService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			header := r.Header.Get("Authorization")
-			if header == "" || !strings.HasPrefix(header, "Bearer ") {
+			var token string
+			if header := r.Header.Get("Authorization"); strings.HasPrefix(header, "Bearer ") {
+				token = strings.TrimPrefix(header, "Bearer ")
+			} else if q := r.URL.Query().Get("token"); q != "" {
+				token = q
+			}
+			if token == "" {
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
-
-			token := strings.TrimPrefix(header, "Bearer ")
 			claims, err := authSvc.ValidateToken(token)
 			if err != nil {
 				http.Error(w, `{"error":"invalid token"}`, http.StatusUnauthorized)

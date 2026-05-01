@@ -15,6 +15,7 @@
 ## 🛠️ Tech Stack (REQUIRED - Use Exactly These)
 
 ### Backend
+
 - **Language:** Go 1.22+
 - **HTTP Framework:** Chi (`github.com/go-chi/chi/v5`)
 - **Database:** PostgreSQL 16
@@ -28,6 +29,7 @@
 - **Password hashing:** `golang.org/x/crypto/bcrypt`
 
 ### Frontend
+
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript (strict mode)
 - **Styling:** Tailwind CSS v4
@@ -42,6 +44,7 @@
 - **Date handling:** date-fns
 
 ### DevOps
+
 - **Containerization:** Docker + docker-compose
 - **Database GUI:** Include adminer in docker-compose for easy DB access
 
@@ -54,16 +57,19 @@ This is the **ONLY** feature for this MVP. Build it deeply, not broadly.
 ### Feature Breakdown
 
 #### 1. Product & Inventory Management
+
 - Each pharmacy has products with batches
 - Each batch has its own expiry date and quantity
 - Same product can have multiple batches (different expiry dates)
 
 #### 2. Sales Data Tracking
+
 - Track sales per product per day
 - Calculate average daily sales (rolling 90-day window)
 - Used to predict if stock will sell before expiring
 
 #### 3. Risk Calculation Engine (THE CORE)
+
 This is the key algorithm. For each batch in inventory:
 
 ```
@@ -85,6 +91,7 @@ suggested_discount:
 ```
 
 #### 4. Dashboard
+
 - Total products at risk (count by risk level)
 - Total estimated loss (€)
 - Total potential savings if action taken
@@ -93,6 +100,7 @@ suggested_discount:
 - Quick actions: View critical alerts, export report
 
 #### 5. Inventory Page
+
 - Sortable/filterable table of all batches
 - Filters: risk level, category, expiry range, supplier
 - Search by name/barcode
@@ -100,18 +108,21 @@ suggested_discount:
 - Bulk actions: mark for discount, transfer, return to supplier
 
 #### 6. Alerts Page
+
 - List of all CRITICAL and HIGH risk items
 - Suggested actions per item
 - Action buttons: Apply Discount, Mark for Transfer, Mark Returned
 - Action history
 
 #### 7. CSV Import
+
 - Upload inventory data (products + batches)
 - Validate format
 - Preview before import
 - Show import results (success, errors)
 
 #### 8. Reports
+
 - Monthly waste reduction report
 - Money saved over time (chart)
 - Most problematic categories
@@ -234,6 +245,7 @@ CREATE TABLE alert_actions (
 The seed script must create REALISTIC demo data:
 
 ### 1. Demo Pharmacy
+
 - Name: "Nicosia Central Pharmacy"
 - License: "CY-PH-2024-001"
 - Address: "12 Makarios Avenue, Nicosia 1065, Cyprus"
@@ -241,11 +253,14 @@ The seed script must create REALISTIC demo data:
 - Email: "demo@pharmasense.cy"
 
 ### 2. Demo Users
+
 - Admin: `admin@pharmasense.cy` / password: `Demo1234!`
 - Staff: `staff@pharmasense.cy` / password: `Demo1234!`
 
 ### 3. Products (~150 realistic pharmacy products)
+
 Mix of categories with bilingual names:
+
 - **Painkillers:** Paracetamol, Ibuprofen, Aspirin, Naproxen, Diclofenac
 - **Antibiotics:** Amoxicillin, Azithromycin, Ciprofloxacin
 - **Vitamins:** Vitamin D3, Vitamin C, Multivitamin, B-Complex, Magnesium, Zinc
@@ -259,19 +274,23 @@ Mix of categories with bilingual names:
 - **First aid:** Bandages, antiseptics, thermometers
 
 Each product should have:
+
 - Real-sounding name
 - Greek translation
 - Realistic category
 - Manufacturer (e.g., "Pfizer", "GSK", "Bayer", "Sanofi", "Roche")
 
 ### 4. Inventory Batches (~500 batches)
+
 Realistic distribution:
+
 - **20% CRITICAL** (expiring within 30 days, with surplus)
 - **25% HIGH risk** (expiring 30-90 days, with surplus)
 - **20% MEDIUM risk** (expiring 90-180 days)
 - **35% LOW risk** (good situation)
 
 Each batch:
+
 - Realistic batch number (e.g., "BTH-2024-XXXXX")
 - Purchase price between €1 - €50
 - Selling price = purchase × 1.3-1.8 markup
@@ -279,6 +298,7 @@ Each batch:
 - Various suppliers: "MedSupply Cyprus", "PharmaWholesale Ltd", "EuroMeds"
 
 ### 5. Sales History (~10,000 sales records)
+
 - Last 90 days of sales
 - Realistic patterns:
   - Painkillers: 5-15 sales/day
@@ -290,6 +310,7 @@ Each batch:
 - Some products with steady sales
 
 ### 6. Pre-calculated Risk Assessments
+
 Run the risk calculation engine on seed data so the dashboard shows real numbers immediately.
 
 ---
@@ -297,6 +318,7 @@ Run the risk calculation engine on seed data so the dashboard shows real numbers
 ## 🎨 UI/UX Requirements
 
 ### Design Principles
+
 - **Clean & Professional** - pharmacies are conservative
 - **Mobile-responsive** - many pharmacists use tablets
 - **Fast** - optimistic updates, skeleton loaders
@@ -304,6 +326,7 @@ Run the risk calculation engine on seed data so the dashboard shows real numbers
 - **Bilingual** - language switcher in header
 
 ### Color Palette (Tailwind)
+
 ```
 Primary: emerald-600 (trust, health)
 Danger: red-600 (CRITICAL)
@@ -315,6 +338,7 @@ Background: white / slate-50
 ```
 
 ### Layout
+
 - **Sidebar navigation** (collapsible on mobile)
 - **Top header** with pharmacy name, language switcher, user menu
 - **Main content area** with breadcrumbs
@@ -322,12 +346,14 @@ Background: white / slate-50
 ### Pages Required
 
 #### `/login`
+
 - Clean login form
 - Email + password
 - "Demo credentials" hint visible
 - Language switcher
 
 #### `/dashboard` (default after login)
+
 - 4 KPI cards at top:
   1. Critical Items Count (red)
   2. Estimated Loss (€) (red)
@@ -339,6 +365,7 @@ Background: white / slate-50
 - "View All Alerts" button
 
 #### `/inventory`
+
 - Search bar (top)
 - Filters sidebar: Risk Level, Category, Expiry Range, Supplier
 - Data table with columns:
@@ -354,6 +381,7 @@ Background: white / slate-50
 - Export to CSV button
 
 #### `/alerts`
+
 - Tabs: "Critical (X)", "High Risk (X)", "All Active"
 - Each alert card:
   - Product name + image placeholder
@@ -366,6 +394,7 @@ Background: white / slate-50
 - Action history at bottom
 
 #### `/import`
+
 - Drag-and-drop CSV upload
 - Download template button
 - Preview table after upload
@@ -374,6 +403,7 @@ Background: white / slate-50
 - Success summary
 
 #### `/reports`
+
 - Date range selector
 - Chart: Money saved over time
 - Chart: Waste reduction trend
@@ -382,6 +412,7 @@ Background: white / slate-50
 - Export PDF button (placeholder OK)
 
 #### `/settings`
+
 - Pharmacy info
 - User management
 - Language preference
@@ -394,21 +425,25 @@ Background: white / slate-50
 All endpoints prefixed with `/api/v1`. JWT auth required except `/auth/*`.
 
 ### Auth
+
 - `POST /auth/login` - Login with email/password
 - `POST /auth/logout`
 - `GET /auth/me` - Current user info
 
 ### Pharmacy
+
 - `GET /pharmacy` - Current pharmacy info
 - `PATCH /pharmacy` - Update info
 
 ### Products
+
 - `GET /products` - List with search/filter
 - `GET /products/:id`
 - `POST /products` - Create
 - `PATCH /products/:id`
 
 ### Inventory
+
 - `GET /inventory` - List batches with filters
 - `GET /inventory/:id`
 - `POST /inventory` - Create batch
@@ -417,21 +452,25 @@ All endpoints prefixed with `/api/v1`. JWT auth required except `/auth/*`.
 - `POST /inventory/import` - CSV import
 
 ### Sales
+
 - `GET /sales` - List with filters
 - `POST /sales` - Record sale
 - `GET /sales/stats` - Aggregated stats
 
 ### Risk
+
 - `GET /risk/dashboard` - Dashboard data
 - `GET /risk/assessments` - List with filters (by risk level)
 - `POST /risk/recalculate` - Trigger recalculation
 - `GET /risk/timeline` - Monthly expiry timeline data
 
 ### Alerts
+
 - `GET /alerts` - Active alerts
 - `POST /alerts/:batch_id/action` - Take action
 
 ### Reports
+
 - `GET /reports/savings` - Savings over time
 - `GET /reports/waste` - Waste reduction
 - `GET /reports/categories` - By category
@@ -533,6 +572,7 @@ pharmacy-saas/
 ## 🐳 Docker Setup
 
 `docker-compose.yml` should include:
+
 - **postgres** (port 5432, with health check)
 - **adminer** (port 8080, for DB GUI)
 - **backend** (port 3001, depends on postgres)
@@ -559,6 +599,7 @@ make build        # Build production binaries
 ## 📝 README.md Requirements
 
 Must include:
+
 1. Project overview
 2. Demo credentials
 3. Quick start (3 commands max)
@@ -635,6 +676,7 @@ This flow MUST be smooth and impressive.
 ## 🚫 What NOT to Build (For Now)
 
 To stay focused, DO NOT include:
+
 - ❌ AI chatbot (later phase)
 - ❌ POS integrations (later)
 - ❌ Multi-pharmacy chains (later)
@@ -649,6 +691,7 @@ To stay focused, DO NOT include:
 ## 💡 Implementation Priority
 
 If running out of time, build in this order:
+
 1. Backend: DB schema + migrations
 2. Backend: Auth + basic CRUD
 3. Backend: Risk engine
@@ -667,6 +710,7 @@ If running out of time, build in this order:
 ## 🎬 Final Note for Claude Code
 
 Please:
+
 - Write CLEAN, idiomatic Go and TypeScript
 - Add helpful comments where logic is non-obvious
 - Use proper error handling everywhere
@@ -675,3 +719,11 @@ Please:
 - Test that everything works end-to-end before declaring done
 
 Quality > Quantity. A polished demo of one feature beats a broken demo of ten features.
+Before we stop, please create a file called PROGRESS.md that summarizes:
+
+1. What has been completed so far
+2. What is currently in progress
+3. What needs to be done next
+4. Any important decisions or context I should remember
+
+Be very detailed so I can resume work later.

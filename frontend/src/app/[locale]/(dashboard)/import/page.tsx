@@ -26,13 +26,20 @@ interface ImportResult {
   template_url: string;
 }
 
+interface ConfirmResult {
+  imported: number;
+  errors: { row: number; error: string }[];
+}
+
 export default function ImportPage() {
   const t = useTranslations("import");
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [confirmResult, setConfirmResult] = useState<ConfirmResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const processFile = async (f: File) => {
     if (!f.name.endsWith(".csv")) {
@@ -40,6 +47,8 @@ export default function ImportPage() {
       return;
     }
     setFile(f);
+    setResult(null);
+    setConfirmResult(null);
     setLoading(true);
     try {
       const data = await inventoryApi.importCSV(f);
@@ -53,6 +62,25 @@ export default function ImportPage() {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!file) return;
+    setImporting(true);
+    try {
+      const data = await inventoryApi.confirmImport(file);
+      setConfirmResult(data);
+      setResult(null);
+      if (data.errors.length === 0) {
+        toast.success(`${t("success")}: ${data.imported} rows imported`);
+      } else {
+        toast.warning(`${data.imported} imported, ${data.errors.length} errors`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Import failed");
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -148,6 +176,40 @@ export default function ImportPage() {
         </CardContent>
       </Card>
 
+      {/* Import result */}
+      {confirmResult && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              {confirmResult.errors.length === 0 ? (
+                <CheckCircle2 className="h-8 w-8 text-emerald-500 shrink-0" />
+              ) : (
+                <AlertCircle className="h-8 w-8 text-orange-500 shrink-0" />
+              )}
+              <div>
+                <p className="font-semibold text-slate-900">
+                  {confirmResult.imported} {t("rows")} imported successfully
+                </p>
+                {confirmResult.errors.length > 0 && (
+                  <p className="text-sm text-orange-600 mt-0.5">
+                    {confirmResult.errors.length} rows skipped due to errors
+                  </p>
+                )}
+              </div>
+            </div>
+            {confirmResult.errors.length > 0 && (
+              <ul className="mt-3 space-y-1">
+                {confirmResult.errors.map((e, i) => (
+                  <li key={i} className="text-xs text-red-600">
+                    Row {e.row}: {e.error}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Preview */}
       {result && (
         <Card>
@@ -163,7 +225,7 @@ export default function ImportPage() {
                 ) : (
                   <span className="flex items-center gap-1 text-red-600 text-sm">
                     <AlertCircle className="h-4 w-4" />
-                    {t("errors_found").replace("{{count}}", result.error_count.toString())}
+                    {t("errors_found", { count: result.error_count })}
                   </span>
                 )}
               </div>
@@ -201,10 +263,10 @@ export default function ImportPage() {
                 Showing first 20 of {result.total_rows} rows
               </p>
               <Button
-                disabled={result.error_count > 0}
-                onClick={() => toast.info("Full import processing coming soon — preview validated!")}
+                disabled={result.error_count > 0 || importing}
+                onClick={handleConfirmImport}
               >
-                {t("import_btn")} ({result.total_rows} rows)
+                {importing ? "Importing..." : `${t("import_btn")} (${result.total_rows} rows)`}
               </Button>
             </div>
           </CardContent>
