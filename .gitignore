@@ -1,0 +1,27 @@
+# Go
+backend/vendor/
+backend/*.exe
+backend/pharmasense-api
+backend/pharmasense-seed
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Env
+.env
+*.env.local
+backend/.env
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
