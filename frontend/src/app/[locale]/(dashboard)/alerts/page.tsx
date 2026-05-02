@@ -275,14 +275,40 @@ export default function AlertsPage() {
         action_type: action,
         discount_percent: discount,
       }),
+    onMutate: async ({ batchId }) => {
+      await queryClient.cancelQueries({ queryKey: ["alerts"] });
+
+      const prevAll = queryClient.getQueryData(["alerts", "all"]);
+      const prevCritical = queryClient.getQueryData(["alerts", "CRITICAL"]);
+      const prevHigh = queryClient.getQueryData(["alerts", "HIGH"]);
+
+      const removeItem = (old: unknown) => {
+        if (!old || typeof old !== "object") return old;
+        const d = old as { data: { id: string }[]; total: number };
+        return { ...d, data: d.data.filter((b) => b.id !== batchId), total: d.total - 1 };
+      };
+
+      queryClient.setQueryData(["alerts", "all"], removeItem);
+      queryClient.setQueryData(["alerts", "CRITICAL"], removeItem);
+      queryClient.setQueryData(["alerts", "HIGH"], removeItem);
+
+      return { prevAll, prevCritical, prevHigh };
+    },
+    onError: (err, _vars, context) => {
+      if (context) {
+        queryClient.setQueryData(["alerts", "all"], context.prevAll);
+        queryClient.setQueryData(["alerts", "CRITICAL"], context.prevCritical);
+        queryClient.setQueryData(["alerts", "HIGH"], context.prevHigh);
+      }
+      toast.error(err instanceof Error ? err.message : "Action failed");
+    },
     onSuccess: () => {
       toast.success(t("action_recorded"));
-      queryClient.invalidateQueries({ queryKey: ["alerts"] });
-      queryClient.invalidateQueries({ queryKey: ["alert-history"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Action failed");
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["alert-history"] });
     },
   });
 

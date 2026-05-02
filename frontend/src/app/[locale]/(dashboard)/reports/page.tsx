@@ -1,25 +1,25 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { FileDown } from "lucide-react";
 import { toast } from "sonner";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { reportsApi } from "@/lib/api";
 import { formatCurrency, formatMonth } from "@/lib/utils";
+
+const SavingsBarChart = dynamic(
+  () => import("@/components/charts/SavingsBarChart").then((m) => m.SavingsBarChart),
+  { ssr: false, loading: () => <Skeleton className="h-64 w-full" /> }
+);
+
+const ActionsLineChart = dynamic(
+  () => import("@/components/charts/ActionsLineChart").then((m) => m.ActionsLineChart),
+  { ssr: false, loading: () => <Skeleton className="h-48 w-full" /> }
+);
 
 export default function ReportsPage() {
   const t = useTranslations("reports");
@@ -74,19 +74,7 @@ export default function ReportsPage() {
                 </div>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={savingsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false}
-                    tickFormatter={(v) => `€${v}`} />
-                  <Tooltip
-                    formatter={(v: number) => formatCurrency(v)}
-                    contentStyle={{ border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px" }}
-                  />
-                  <Bar dataKey="saved" fill="#059669" name="Estimated Saved" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <SavingsBarChart data={savingsData} />
             )}
           </CardContent>
         </Card>
@@ -105,15 +93,7 @@ export default function ReportsPage() {
                 No data yet
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={savingsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={{ border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px" }} />
-                  <Line dataKey="actions" stroke="#059669" strokeWidth={2} dot={false} name="Actions" />
-                </LineChart>
-              </ResponsiveContainer>
+              <ActionsLineChart data={savingsData} />
             )}
           </CardContent>
         </Card>

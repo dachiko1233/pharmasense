@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Package,
@@ -13,6 +14,7 @@ import {
   Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { riskApi, alertsApi, inventoryApi, reportsApi } from "@/lib/api";
 
 const navItems = [
   { key: "dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -27,6 +29,34 @@ export function Sidebar() {
   const t = useTranslations("nav");
   const locale = useLocale();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
+
+  const prefetchRoute = (href: string) => {
+    switch (href) {
+      case "/dashboard":
+        queryClient.prefetchQuery({ queryKey: ["dashboard"], queryFn: riskApi.dashboard });
+        queryClient.prefetchQuery({ queryKey: ["timeline"], queryFn: riskApi.timeline });
+        queryClient.prefetchQuery({ queryKey: ["top-risk"], queryFn: () => riskApi.topRisk(10) });
+        break;
+      case "/alerts":
+        queryClient.prefetchQuery({ queryKey: ["alerts", "all"], queryFn: () => alertsApi.list() });
+        queryClient.prefetchQuery({
+          queryKey: ["alerts", "CRITICAL"],
+          queryFn: () => alertsApi.list("CRITICAL"),
+        });
+        break;
+      case "/inventory":
+        queryClient.prefetchQuery({
+          queryKey: ["inventory-filters"],
+          queryFn: inventoryApi.filters,
+        });
+        break;
+      case "/reports":
+        queryClient.prefetchQuery({ queryKey: ["savings"], queryFn: reportsApi.savings });
+        queryClient.prefetchQuery({ queryKey: ["categories"], queryFn: reportsApi.categories });
+        break;
+    }
+  };
 
   return (
     <aside className="flex h-screen w-60 flex-col border-r border-slate-200 bg-white">
@@ -50,6 +80,7 @@ export function Sidebar() {
             <Link
               key={key}
               href={fullHref}
+              onMouseEnter={() => prefetchRoute(href)}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
