@@ -106,7 +106,14 @@ export const inventoryApi = {
   get: (id: string) =>
     request<InventoryBatchWithRisk>(`/inventory/${id}`),
   filters: () => request<InventoryFilters>("/inventory/filters"),
-  exportURL: () => `${BASE_URL}/inventory/export?token=${getToken()}`,
+  exportCSV: async () => {
+    const token = getToken();
+    const res = await fetch(`${BASE_URL}/inventory/export`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Export failed");
+    return res.blob();
+  },
   templateURL: () => `${BASE_URL}/inventory/import/template`,
   importCSV: (file: File) => {
     const form = new FormData();

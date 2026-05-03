@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
@@ -26,10 +26,8 @@ export default function DashboardLayout({
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     if (!isAuthenticated()) {
       router.push(`/${locale}/login`);
     }
@@ -38,13 +36,10 @@ export default function DashboardLayout({
   const { data: pharmacy } = useQuery({
     queryKey: ["pharmacy"],
     queryFn: pharmacyApi.get,
-    enabled: mounted,
   });
 
   const currentPage = pathname.split("/").pop() || "dashboard";
   const breadcrumb = pageTitles[currentPage] || "";
-
-  if (!mounted) return null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">

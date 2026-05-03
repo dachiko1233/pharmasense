@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Search, SlidersHorizontal, Download, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ const PAGE_SIZE = 50;
 
 export default function InventoryPage() {
   const t = useTranslations('inventory');
+  const tc = useTranslations('common');
   const [search, setSearch] = useState('');
   const [riskLevel, setRiskLevel] = useState('');
   const [category, setCategory] = useState('');
@@ -66,6 +68,22 @@ export default function InventoryPage() {
   const total = data?.total ?? 0;
   const batches: InventoryBatchWithRisk[] = data?.data ?? [];
   const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const handleExport = async () => {
+    try {
+      const blob = await inventoryApi.exportCSV();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'inventory.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Export failed');
+    }
+  };
 
   return (
     <div className="space-y-4 max-w-7xl">
@@ -160,11 +178,9 @@ export default function InventoryPage() {
             </Button>
           )}
 
-          <Button variant="outline" size="sm" asChild>
-            <a href={inventoryApi.exportURL()} download>
-              <Download className="h-4 w-4 mr-1.5" />
-              {t('export')}
-            </a>
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1.5" />
+            {t('export')}
           </Button>
         </div>
       </div>
@@ -173,7 +189,7 @@ export default function InventoryPage() {
       <div className="flex items-center justify-between text-sm text-slate-500">
         <span>{isLoading ? 'Loading...' : `${total} batches`}</span>
         <div className="flex items-center gap-2">
-          <span>{t('common.of', { ns: 'common' })}</span>
+          <span>{tc('of')}</span>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="h-7 w-44 text-xs">
               <SelectValue />
