@@ -28,6 +28,12 @@ func New(repo *repository.Repository, authSvc *services.AuthService, engine *ser
 	productsH := handlers.NewProductsHandler(repo)
 
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		})
+
 		// Public auth routes
 		r.Post("/auth/login", authH.Login)
 		r.Post("/auth/logout", authH.Logout)
