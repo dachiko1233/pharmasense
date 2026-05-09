@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useRouter, usePathname } from "@/i18n/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -23,15 +22,14 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     if (!isAuthenticated()) {
-      router.push(`/${locale}/login`);
+      router.push("/login");
     }
-  }, [locale, router]);
+  }, [router]);
 
   const { data: pharmacy } = useQuery({
     queryKey: ["pharmacy"],

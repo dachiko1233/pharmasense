@@ -1,7 +1,7 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
-import { useRouter, usePathname } from "next/navigation";
+import { useLocale } from "next-intl";
+import { useRouter, usePathname } from "@/i18n/navigation";
 import { Globe, LogOut, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,14 +32,12 @@ export function Header({ pharmacyName, breadcrumb }: HeaderProps) {
   }, []);
 
   const switchLocale = (newLocale: string) => {
-    const segments = pathname.split("/");
-    segments[1] = newLocale;
-    router.push(segments.join("/"));
+    router.replace(pathname, { locale: newLocale });
   };
 
   const handleLogout = () => {
     clearAuth();
-    router.push(`/${locale}/login`);
+    router.push("/login");
   };
 
   return (

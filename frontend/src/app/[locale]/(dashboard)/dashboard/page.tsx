@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
-import { useTranslations, useLocale } from "next-intl";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import {
   AlertTriangle,
   TrendingDown,
@@ -60,7 +60,6 @@ function KPICard({
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
-  const locale = useLocale();
 
   const { data: dashboard, isLoading: dashLoading } = useQuery({
     queryKey: ["dashboard"],
@@ -109,28 +108,28 @@ export default function DashboardPage() {
             <KPICard
               title={t("critical_items")}
               value={`${dashboard?.critical_count ?? 0} ${t("items")}`}
-              subtitle={`+${dashboard?.high_count ?? 0} high risk`}
+              subtitle={`+${dashboard?.high_count ?? 0} ${t("high_risk_suffix")}`}
               icon={AlertTriangle}
               color="bg-red-600"
             />
             <KPICard
               title={t("estimated_loss")}
               value={formatCurrency(dashboard?.total_estimated_loss ?? 0)}
-              subtitle="If no action taken"
+              subtitle={t("loss_subtitle")}
               icon={TrendingDown}
               color="bg-red-500"
             />
             <KPICard
               title={t("potential_savings")}
               value={formatCurrency(dashboard?.total_potential_savings ?? 0)}
-              subtitle="With recommended actions"
+              subtitle={t("savings_subtitle")}
               icon={TrendingUp}
               color="bg-emerald-600"
             />
             <KPICard
               title={t("inventory_value")}
               value={formatCurrency(dashboard?.total_inventory_value ?? 0)}
-              subtitle="Total stock at selling price"
+              subtitle={t("inventory_subtitle")}
               icon={Package}
               color="bg-slate-500"
             />
@@ -200,10 +199,10 @@ export default function DashboardPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>{t("recent_critical")}</CardTitle>
-            <CardDescription>Items requiring immediate action</CardDescription>
+            <CardDescription>{t("items_requiring_action")}</CardDescription>
           </div>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/${locale}/alerts`} className="gap-2">
+            <Link href="/alerts" className="gap-2">
               {t("view_all")}
               <ArrowRight className="h-3 w-3" />
             </Link>
@@ -237,7 +236,7 @@ export default function DashboardPage() {
                         {alert.product_name}
                       </p>
                       <p className="text-xs text-slate-500">
-                        Batch: {alert.batch_number} · {alert.current_quantity} units
+                        {t("batch_details", { batch: alert.batch_number, qty: alert.current_quantity })}
                       </p>
                     </div>
                   </div>
@@ -250,7 +249,7 @@ export default function DashboardPage() {
                           : t("days_left", { days: alert.days_until_expiry })}
                       </div>
                       <p className="text-xs font-semibold text-slate-700 mt-0.5">
-                        {formatCurrency(alert.estimated_loss)} loss
+                        {t("loss_amount", { amount: formatCurrency(alert.estimated_loss) })}
                       </p>
                     </div>
                     <RiskBadge level={alert.risk_level} />

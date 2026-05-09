@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
+import { Link, usePathname } from "@/i18n/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -27,7 +26,6 @@ const navItems = [
 
 export function Sidebar() {
   const t = useTranslations("nav");
-  const locale = useLocale();
   const pathname = usePathname();
   const queryClient = useQueryClient();
 
@@ -74,12 +72,11 @@ export function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 space-y-1 p-3">
         {navItems.map(({ key, icon: Icon, href }) => {
-          const fullHref = `/${locale}${href}`;
-          const isActive = pathname === fullHref || pathname.startsWith(fullHref + "/");
+          const isActive = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={key}
-              href={fullHref}
+              href={href}
               onMouseEnter={() => prefetchRoute(href)}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",

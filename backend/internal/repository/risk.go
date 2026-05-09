@@ -56,6 +56,8 @@ func (r *Repository) GetDashboard(ctx context.Context, pharmacyID uuid.UUID) (*m
 	}
 	defer rows.Close()
 
+	var criticalLoss, highLoss, mediumLoss float64
+
 	for rows.Next() {
 		var level string
 		var count int
@@ -67,17 +69,24 @@ func (r *Repository) GetDashboard(ctx context.Context, pharmacyID uuid.UUID) (*m
 		case "CRITICAL":
 			d.CriticalCount = count
 			d.TotalEstimatedLoss += loss
+			criticalLoss = loss
 		case "HIGH":
 			d.HighCount = count
 			d.TotalEstimatedLoss += loss
+			highLoss = loss
 		case "MEDIUM":
 			d.MediumCount = count
+			mediumLoss = loss
 		case "LOW":
 			d.LowCount = count
 		}
 	}
 
-	d.TotalPotentialSavings = d.TotalEstimatedLoss * 0.6
+	// Recovery rates per risk level (applying discounts clears most surplus):
+	// CRITICAL (40% discount applied) → 80% of surplus value recovered
+	// HIGH     (20% discount applied) → 88% of surplus value recovered
+	// MEDIUM   (10% discount applied) → 93% of surplus value recovered
+	d.TotalPotentialSavings = criticalLoss*0.80 + highLoss*0.88 + mediumLoss*0.93
 
 	// Total inventory value
 	err = r.pool.QueryRow(ctx, `
