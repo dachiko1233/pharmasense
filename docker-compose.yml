@@ -27,37 +27,23 @@ services:
       postgres:
         condition: service_healthy
 
-  backend:
+  app:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
-    container_name: pharmasense-backend
+    container_name: pharmasense-app
     environment:
       DATABASE_URL: postgres://pharmasense:pharmasense@postgres:5432/pharmasense?sslmode=disable
       JWT_SECRET: super-secret-jwt-key-change-in-production-min-32-chars
-      PORT: "3001"
+      PORT: "3000"
+      NEXT_PORT: "3001"
       ENV: production
       SEED_ON_EMPTY: "true"
     ports:
-      - "3001:3001"
+      - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
-    container_name: pharmasense-frontend
-    environment:
-      NODE_ENV: production
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
     restart: unless-stopped
 
 volumes:

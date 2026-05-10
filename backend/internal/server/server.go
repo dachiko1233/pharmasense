@@ -2,6 +2,9 @@ package server
 
 import (
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
@@ -79,6 +82,16 @@ func New(repo *repository.Repository, authSvc *services.AuthService, engine *ser
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
+
+	// Proxy everything else to the Next.js frontend server.
+	nextPort := os.Getenv("NEXT_PORT")
+	if nextPort == "" {
+		nextPort = "3000"
+	}
+	nextTarget, _ := url.Parse("http://127.0.0.1:" + nextPort)
+	proxy := httputil.NewSingleHostReverseProxy(nextTarget)
+	r.NotFound(proxy.ServeHTTP)
+	r.MethodNotAllowed(proxy.ServeHTTP)
 
 	return r
 }
