@@ -1,6 +1,6 @@
 # PharmaSense — Progress Log
 
-## Status: Ready to Run
+## Status: Ready to Run — Railway deploy config updated 2026-05-10
 
 `docker-compose up --build` should bring the full stack up. Demo data seeds automatically on first run.
 
