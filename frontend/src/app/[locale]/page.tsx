@@ -6,5 +6,9 @@ export default async function LocaleIndex({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  redirect(`/${locale}/dashboard`);
+  if (locale === "en") {
+    redirect("/dashboard");
+  } else {
+    redirect(`/${locale}/dashboard`);
+  }
 }

@@ -21,7 +21,7 @@ export default function RootNotFound() {
           Page not found
         </p>
         <Link
-          href="/en"
+          href="/"
           style={{
             display: "inline-block",
             marginTop: "1.5rem",
